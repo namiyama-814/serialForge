@@ -1,0 +1,9 @@
+services:
+  app:
+    image: node:22.18.0-slim
+    tty: true
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    working_dir: /app
