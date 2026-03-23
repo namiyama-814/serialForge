@@ -11,7 +11,7 @@ const app = new Hono();
 app.get('/', (c) => c.html(pug.compileFile('./views/index.pug')()));
 app.get('/make', (c) => c.html(pug.compileFile('./views/make.pug')()));
 app.get('/use', (c) => c.html(pug.compileFile('./views/use.pug')()));
-app.all('*', (c) => c.html(pug.compileFile('./views/404.pug', 404)()));
+app.all('*', (c) => c.html(pug.compileFile('./views/404.pug')(), 404));
 
 // API
 app.post('/make', async (c) => {
