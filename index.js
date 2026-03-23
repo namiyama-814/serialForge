@@ -2,32 +2,41 @@
 const { Hono } = require('hono');
 const { serve } = require('@hono/node-server');
 const pug = require('pug');
-const { logger } = require('hono/logger');
+const { serialMake, serialUse } = require('./lib/make.js');
+const path = require('path');
 
 const app = new Hono();
 
-app.get('/', (c) => {
-  const template = pug.compileFile('./views/index.pug');
-  const html = template({ title: 'Home' });
-  return c.html(html);
+// ページ表示
+app.get('/', (c) => c.html(pug.compileFile('./views/index.pug')()));
+app.get('/make', (c) => c.html(pug.compileFile('./views/make.pug')()));
+app.get('/use', (c) => c.html(pug.compileFile('./views/use.pug')()));
+app.all('*', (c) => c.html(pug.compileFile('./views/404.pug', 404)()));
+
+// API
+app.post('/make', async (c) => {
+  const form = await c.req.formData();
+  const count = form.get('count');
+  const expiry = form.get('expiry');
+  const password = form.get('password');
+
+  if (!count || !expiry || !password) return c.json({ success: false, message: '入力が不完全です' });
+
+  const serialNumber = serialMake(Number(count), expiry, password);
+  return c.json({ success: true, serialNumber });
 });
 
-app.get('/make', (c) => {
-  const template = pug.compileFile('./views/make.pug');
-  const html = template({ title: 'Make' });
-  return c.html(html);
-})
+app.post('/use', async (c) => {
+  const form = await c.req.formData();
+  const serialNumber = form.get('serialNumber');
+  const password = form.get('password');
 
-app.get('/use', (c) => {
-  const template = pug.compileFile('./views/use.pug');
-  const html = template({ title: 'Use' });
-  return c.html(html);
-})
+  if (!serialNumber || !password) return c.json({ success: false, message: '入力が不完全です' });
 
-const port = 8000;
+  const result = serialUse(serialNumber, password);
+  return c.json(result);
+});
+
+const port = process.env.PORT || 8000;
 console.log(`${port}番ポートでサーバー起動中`);
-
-serve({
-  fetch: app.fetch,
-  port,
-});
+serve({ fetch: app.fetch, port });
